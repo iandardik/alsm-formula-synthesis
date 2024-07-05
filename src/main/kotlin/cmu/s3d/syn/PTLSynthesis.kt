@@ -25,10 +25,10 @@ class FormulaVisitor(
         val nodeType = alloyNode.split("$")[0]
         return when (nodeType) {
             "Root" -> children.joinToString("")
-            "Not" -> "~${children.joinToString("")}"
-            "And" -> children.joinToString(" /\\ ")
-            "Implies" -> children.joinToString(" => ")
-            "Or" -> children.joinToString(" \\/ ")
+            "Not" -> "~(${children.joinToString("")})"
+            "And" -> "(${children.joinToString(" /\\ ")})"
+            "Implies" -> "(${children.joinToString(" => ")})"
+            "Or" -> "(${children.joinToString(" \\/ ")})"
             "OnceAct" -> {
                 val actStr = "${alloyNode}.act"
                 val actExpr = CompUtil.parseOneExpression_fromString(world, actStr)
