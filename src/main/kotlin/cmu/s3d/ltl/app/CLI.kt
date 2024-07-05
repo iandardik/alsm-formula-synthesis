@@ -4,10 +4,12 @@ import cmu.s3d.ltl.learning.AlloyMaxBase
 import cmu.s3d.ltl.learning.LTLLearningSolution
 import cmu.s3d.ltl.samples2ltl.Task
 import cmu.s3d.ltl.samples2ltl.TaskParser
+import cmu.s3d.syn.synthFormulaFromAls
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.int
 import edu.mit.csail.sdg.translator.A4Options
 import java.io.File
@@ -16,19 +18,23 @@ import java.nio.file.Paths
 import java.util.*
 
 class CLI : CliktCommand(
-    name = "Atlas",
-    help = "A tool to learn LTL formulas from a set of positive and negative examples by using AlloyMax."
+    name = "PTLSynth",
+    help = "A tool to synthesize PTL formulas over transitions in an error LTS by using AlloyMax."
 ) {
-    private val _run by option("--_run", help = "Run the learning process. YOU SHOULD NOT USE THIS. INTERNAL USE ONLY.")
-    private val solver by option("--solver", "-s", help = "The AlloyMax solver to use. Default: SAT4JMax").default("SAT4JMax")
-    private val filename by option("--filename", "-f", help = "The file containing one task to run.")
-    private val traces by option("--traces", "-t", help = "The folder containing the tasks to run. It will find all task files under the folder recursively.")
-    private val timeout by option("--timeout", "-T", help = "The timeout in seconds for solving each task.").int().default(0)
-    private val model by option("--model", "-m", help = "Print the model to use for learning.").flag(default = false)
-    private val findAny by option("--findAny", "-A", help = "Find any solution. Default: false").flag(default = false)
-    private val expected by option("--expected", "-e", help = "Enumerate until the expected formula found.").flag(default = false)
+    //private val _run by option("--_run", help = "Run the learning process. YOU SHOULD NOT USE THIS. INTERNAL USE ONLY.")
+    //private val solver by option("--solver", "-s", help = "The AlloyMax solver to use. Default: SAT4JMax").default("SAT4JMax")
+    private val filename by option("--filename", "-f", help = "The .als file.").required()
+    //private val traces by option("--traces", "-t", help = "The folder containing the tasks to run. It will find all task files under the folder recursively.")
+    //private val timeout by option("--timeout", "-T", help = "The timeout in seconds for solving each task.").int().default(0)
+    //private val model by option("--model", "-m", help = "Print the model to use for learning.").flag(default = false)
+    //private val findAny by option("--findAny", "-A", help = "Find any solution. Default: false").flag(default = false)
+    //private val expected by option("--expected", "-e", help = "Enumerate until the expected formula found.").flag(default = false)
 
     override fun run() {
+        val formula = synthFormulaFromAls(filename)
+        println(formula)
+        /*
+        return
         val options = AlloyMaxBase.defaultAlloyOptions()
         options.solver = when (solver) {
             "SAT4JMax" -> A4Options.SatSolver.SAT4JMax
@@ -84,8 +90,10 @@ class CLI : CliktCommand(
                     .forEach { runInSubProcess(it, Paths.get(traces!!, it.absolutePath.substringAfter(traces!!)).toString())  }
             }
         }
+         */
     }
 
+    /*
     private fun findExpected(task: Task, solution: LTLLearningSolution?): String {
         var sol = solution
         var formula = sol?.getLTL2()
@@ -145,6 +153,7 @@ class CLI : CliktCommand(
             process.destroyForcibly()
         }
     }
+    */
 }
 
 fun main(args: Array<String>) {
