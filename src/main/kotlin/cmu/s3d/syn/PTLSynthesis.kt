@@ -30,16 +30,43 @@ class FormulaVisitor(
             "Implies" -> "(${children.joinToString(" => ")})"
             "Or" -> "(${children.joinToString(" \\/ ")})"
             "OnceAct" -> {
-                val actStr = "${alloyNode}.act"
-                val actExpr = CompUtil.parseOneExpression_fromString(world, actStr)
-                val rawAct = (solution.eval(actExpr) as A4TupleSet).joinToString("") { it.atom(0) }
+                val rawAct = queryAlloyModel("${alloyNode}.oact", "")
                 val act = rawAct.split("$")[0]
                 "once($act)"
+            }
+            "OnceVar" -> {
+                val rawBase = queryAlloyModel("${alloyNode}.base", "")
+                val base = rawBase.split("$")[0]
+
+                val strNumParams = queryAlloyModelDirectStr("#$alloyNode.ovars")
+                val numParams = strNumParams.toInt()
+                val params = (0 until numParams)
+                    .map { queryAlloyModel("$alloyNode.ovars.subseq[$it,$it].first", "") }
+                    .map { it.replace("$", "") }
+                    .joinToString(",")
+                "once($base($params))"
+            }
+            "Forall" -> {
+                val rawVar = queryAlloyModel("${alloyNode}.var", "")
+                val vr = rawVar.replace("$", "")
+                val rawSort = queryAlloyModel("${alloyNode}.sort", "")
+                val sort = rawSort.split("$")[0]
+                "\\A $vr \\in $sort : ${children.joinToString("")}"
             }
             "TT" -> "TRUE"
             "FF" -> "FALSE"
             else -> error("Invalid node type: $nodeType")
         }
+    }
+
+    private fun queryAlloyModel(query : String, sep : String) : String {
+        val expr = CompUtil.parseOneExpression_fromString(world, query)
+        return (solution.eval(expr) as A4TupleSet).joinToString(sep) { it.atom(0) }
+    }
+
+    private fun queryAlloyModelDirectStr(query : String) : String {
+        val expr = CompUtil.parseOneExpression_fromString(world, query)
+        return solution.eval(expr) as String
     }
 }
 
