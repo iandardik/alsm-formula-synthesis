@@ -27,8 +27,13 @@ class FormulaVisitor(
             "Root" -> children.joinToString("")
             "Not" -> "~(${children.joinToString("")})"
             "And" -> "(${children.joinToString(" /\\ ")})"
-            "Implies" -> "(${children.joinToString(" => ")})"
+            "Implies" -> {
+                val left = createString(queryAlloyModel("${alloyNode}.left", ""))
+                val right = createString(queryAlloyModel("${alloyNode}.right", ""))
+                "($left => $right)"
+            }
             "Or" -> "(${children.joinToString(" \\/ ")})"
+            "EqualsVar" -> "(${children.joinToString(" = ")})"
             "OnceAct" -> {
                 val rawAct = queryAlloyModel("${alloyNode}.oact", "")
                 val act = rawAct.split("$")[0]
