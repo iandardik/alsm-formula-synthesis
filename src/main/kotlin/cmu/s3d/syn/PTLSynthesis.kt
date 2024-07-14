@@ -35,18 +35,18 @@ class FormulaVisitor(
             "Or" -> "(${children.joinToString(" \\/ ")})"
             "EqualsVar" -> "(${children.joinToString(" = ")})"
             "OnceAct" -> {
-                val rawAct = queryAlloyModel("${alloyNode}.oact", "")
+                val rawAct = queryAlloyModel("${alloyNode}.act", "")
                 val act = rawAct.split("$")[0]
                 "once($act)"
             }
             "OnceVar" -> {
-                val rawBase = queryAlloyModel("${alloyNode}.base", "")
+                val rawBase = queryAlloyModel("${alloyNode}.baseName", "")
                 val base = rawBase.split("$")[0]
 
-                val strNumParams = queryAlloyModelDirectStr("#$alloyNode.ovars")
+                val strNumParams = queryAlloyModelDirectStr("#$alloyNode.vars")
                 val numParams = strNumParams.toInt()
                 val params = (0 until numParams)
-                    .map { queryAlloyModel("$alloyNode.ovars.subseq[$it,$it].first", "") }
+                    .map { queryAlloyModel("$alloyNode.vars.subseq[$it,$it].first", "") }
                     .map { it.replace("$", "") }
                     .joinToString(",")
                 "once($base($params))"
@@ -57,6 +57,13 @@ class FormulaVisitor(
                 val rawSort = queryAlloyModel("${alloyNode}.sort", "")
                 val sort = rawSort.split("$")[0]
                 "\\A $vr \\in $sort : ${children.joinToString("")}"
+            }
+            "Exists" -> {
+                val rawVar = queryAlloyModel("${alloyNode}.var", "")
+                val vr = rawVar.replace("$", "")
+                val rawSort = queryAlloyModel("${alloyNode}.sort", "")
+                val sort = rawSort.split("$")[0]
+                "\\E $vr \\in $sort : ${children.joinToString("")}"
             }
             "TT" -> "TRUE"
             "FF" -> "FALSE"
