@@ -12,7 +12,8 @@ import java.lang.RuntimeException
 
 class FormulaVisitor(
     private val world : CompModule,
-    private val solution : A4Solution
+    private val solution : A4Solution,
+    private val tlaStyle : Boolean
 ) {
     fun createString(alloyNode : String) : String {
         val childrenStr = "${alloyNode}.children"
@@ -26,30 +27,39 @@ class FormulaVisitor(
         return when (nodeType) {
             "Root" -> children.joinToString("")
             "Not" -> "~(${children.joinToString("")})"
-            "And" -> "(${children.joinToString(" /\\ ")})"
+            "And" -> "(${children.joinToString(") /\\ (")})"
             "Implies" -> {
                 val left = createString(queryAlloyModel("${alloyNode}.left", ""))
                 val right = createString(queryAlloyModel("${alloyNode}.right", ""))
-                "($left => $right)"
+                "($left) => ($right)"
             }
-            "Or" -> "(${children.joinToString(" \\/ ")})"
+            "Or" -> "(${children.joinToString(") \\/ (")})"
             "EqualsVar" -> "(${children.joinToString(" = ")})"
             "OnceAct" -> {
                 val rawAct = queryAlloyModel("${alloyNode}.act", "")
                 val act = rawAct.split("$")[0]
-                "once($act)"
+                if (tlaStyle) {
+                    "once$act"
+                } else {
+                    "once($act)"
+                }
             }
             "OnceVar" -> {
                 val rawBase = queryAlloyModel("${alloyNode}.baseName", "")
                 val base = rawBase.split("$")[0]
 
+                val paramSeparator = if (tlaStyle) "][" else ","
                 val strNumParams = queryAlloyModelDirectStr("#$alloyNode.vars")
                 val numParams = strNumParams.toInt()
                 val params = (0 until numParams)
                     .map { queryAlloyModel("$alloyNode.vars.subseq[$it,$it].first", "") }
                     .map { it.replace("$", "") }
-                    .joinToString(",")
-                "once($base($params))"
+                    .joinToString(paramSeparator)
+                if (tlaStyle) {
+                    "once$base[$params]"
+                } else {
+                    "once($base($params))"
+                }
             }
             "Forall" -> {
                 val rawVar = queryAlloyModel("${alloyNode}.var", "")
@@ -99,7 +109,7 @@ fun alloyColdStart() {
     TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 }
 
-fun synthFormulaFromAls(path : String) : String {
+fun synthFormulaFromAls(path : String, tlaStyle : Boolean) : String {
     val als = File(path).readText()
 
     alloyColdStart()
@@ -120,7 +130,7 @@ fun synthFormulaFromAls(path : String) : String {
         world.addGlobal(a.label, a)
     }
 
-    return FormulaVisitor(world, solution).createString("Root")
+    return FormulaVisitor(world, solution, tlaStyle).createString("Root")
 }
 
 /*
