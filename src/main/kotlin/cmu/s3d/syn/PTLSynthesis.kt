@@ -53,7 +53,7 @@ class FormulaVisitor(
                 val numParams = strNumParams.toInt()
                 val params = (0 until numParams)
                     .map { queryAlloyModel("$alloyNode.vars.subseq[$it,$it].first", "") }
-                    .map { it.replace("$", "") }
+                    .map { it.split("$")[0] }
                     .joinToString(paramSeparator)
                 if (tlaStyle) {
                     "once$base[$params]"
@@ -63,14 +63,14 @@ class FormulaVisitor(
             }
             "Forall" -> {
                 val rawVar = queryAlloyModel("${alloyNode}.var", "")
-                val vr = rawVar.replace("$", "")
+                val vr = rawVar.split("$")[0]
                 val rawSort = queryAlloyModel("${alloyNode}.sort", "")
                 val sort = rawSort.split("$")[0]
                 "\\A $vr \\in $sort : ${children.joinToString("")}"
             }
             "Exists" -> {
                 val rawVar = queryAlloyModel("${alloyNode}.var", "")
-                val vr = rawVar.replace("$", "")
+                val vr = rawVar.split("$")[0]
                 val rawSort = queryAlloyModel("${alloyNode}.sort", "")
                 val sort = rawSort.split("$")[0]
                 "\\E $vr \\in $sort : ${children.joinToString("")}"
@@ -109,28 +109,30 @@ fun alloyColdStart() {
     TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 }
 
-fun synthFormulaFromAls(path : String, tlaStyle : Boolean) : String {
-    val als = File(path).readText()
+object AlsSynthesis {
+    fun synthFormulaFromAls(path : String, tlaStyle : Boolean) : String {
+        val als = File(path).readText()
 
-    alloyColdStart()
-    val reporter = A4Reporter.NOP
-    val world = CompUtil.parseEverything_fromString(reporter, als)
-    val options = alloyDefaultOptions()
-    val command = world.allCommands.first()
-    val solution = TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
+        alloyColdStart()
+        val reporter = A4Reporter.NOP
+        val world = CompUtil.parseEverything_fromString(reporter, als)
+        val options = alloyDefaultOptions()
+        val command = world.allCommands.first()
+        val solution = TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 
-    if (!solution.satisfiable()) {
-        return "could not synthesize a formula! (UNSAT)"
+        if (!solution.satisfiable()) {
+            return "could not synthesize a formula! (UNSAT)"
+        }
+
+        for (a in solution.allAtoms) {
+            world.addGlobal(a.label, a)
+        }
+        for (a in solution.allSkolems) {
+            world.addGlobal(a.label, a)
+        }
+
+        return FormulaVisitor(world, solution, tlaStyle).createString("Root")
     }
-
-    for (a in solution.allAtoms) {
-        world.addGlobal(a.label, a)
-    }
-    for (a in solution.allSkolems) {
-        world.addGlobal(a.label, a)
-    }
-
-    return FormulaVisitor(world, solution, tlaStyle).createString("Root")
 }
 
 /*

@@ -4,7 +4,7 @@ import cmu.s3d.ltl.learning.AlloyMaxBase
 import cmu.s3d.ltl.learning.LTLLearningSolution
 import cmu.s3d.ltl.samples2ltl.Task
 import cmu.s3d.ltl.samples2ltl.TaskParser
-import cmu.s3d.syn.synthFormulaFromAls
+import cmu.s3d.syn.AlsSynthesis
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
@@ -32,7 +32,7 @@ class CLI : CliktCommand(
     //private val expected by option("--expected", "-e", help = "Enumerate until the expected formula found.").flag(default = false)
 
     override fun run() {
-        val formula = synthFormulaFromAls(filename, tla)
+        val formula = AlsSynthesis.synthFormulaFromAls(filename, tla)
         println(formula)
         /*
         return
