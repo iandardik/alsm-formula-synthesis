@@ -23,7 +23,8 @@ class FormulaVisitor(
             .map { createString(it) }
             .toList()
 
-        val nodeType = alloyNode.split("$")[0]
+        val nodeName = alloyNode.split("$")[0]
+        val nodeType = if (nodeName.contains("Fluent")) "Fluent" else nodeName
         return when (nodeType) {
             "Root" -> children.joinToString("")
             "Not" -> "~(${children.joinToString("")})"
@@ -52,13 +53,38 @@ class FormulaVisitor(
                 val strNumParams = queryAlloyModelDirectStr("#$alloyNode.vars")
                 val numParams = strNumParams.toInt()
                 val params = (0 until numParams)
-                    .map { queryAlloyModel("$alloyNode.vars.subseq[$it,$it].first", "") }
+                    .map { queryAlloyModel("P$it.($alloyNode.vars)", "") }
                     .map { it.split("$")[0] }
                     .joinToString(paramSeparator)
                 if (tlaStyle) {
                     "once$base[$params]"
                 } else {
                     "once($base($params))"
+                }
+            }
+            "Fluent" -> {
+                val fluentNodeName = alloyNode.replace("$", "") //nodeName
+
+                // first, print the fluent
+                val fluentInitially = queryAlloyModel("${alloyNode}.initially", "")
+                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl", ",")
+                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl", ",")
+                println("$fluentNodeName:")
+                println("  Initially: $fluentInitially")
+                println("  Init: $fluentInitFl")
+                println("  Term: $fluentTermFl")
+
+                val paramSeparator = if (tlaStyle) "][" else ","
+                val strNumParams = queryAlloyModelDirectStr("#$alloyNode.vars")
+                val numParams = strNumParams.toInt()
+                val params = (0 until numParams)
+                    .map { queryAlloyModel("P$it.($alloyNode.vars)", "") }
+                    .map { it.split("$")[0] }
+                    .joinToString(paramSeparator)
+                if (tlaStyle) {
+                    "$fluentNodeName[$params]"
+                } else {
+                    "$fluentNodeName($params)"
                 }
             }
             "Forall" -> {
@@ -92,9 +118,9 @@ class FormulaVisitor(
     }
 }
 
-fun alloyDefaultOptions(): A4Options {
+fun alloyOptions(custSolver : A4Options.SatSolver = A4Options.SatSolver.SAT4JMax): A4Options {
     return A4Options().apply {
-        solver = A4Options.SatSolver.SAT4JMax
+        solver = custSolver
         skolemDepth = 1
         noOverflow = false
         inferPartialInstance = true
@@ -104,7 +130,7 @@ fun alloyDefaultOptions(): A4Options {
 fun alloyColdStart() {
     val reporter = A4Reporter.NOP
     val world = CompUtil.parseEverything_fromString(reporter, "")
-    val options = alloyDefaultOptions()
+    val options = alloyOptions()
     val command = world.allCommands.first()
     TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 }
@@ -116,7 +142,7 @@ object AlsSynthesis {
         alloyColdStart()
         val reporter = A4Reporter.NOP
         val world = CompUtil.parseEverything_fromString(reporter, als)
-        val options = alloyDefaultOptions()
+        val options = alloyOptions(A4Options.SatSolver.OpenWBO)
         val command = world.allCommands.first()
         val solution = TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 
