@@ -8,12 +8,13 @@ import edu.mit.csail.sdg.translator.A4Solution
 import edu.mit.csail.sdg.translator.A4TupleSet
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod
 import java.io.File
-import java.lang.RuntimeException
 
 class FormulaVisitor(
+    private val rawFile : String,
     private val world : CompModule,
     private val solution : A4Solution,
-    private val tlaStyle : Boolean
+    private val tlaStyle : Boolean,
+    private val formula : FormulaInfo
 ) {
     fun createString(alloyNode : String) : String {
         val childrenStr = "${alloyNode}.children"
@@ -63,20 +64,60 @@ class FormulaVisitor(
                 }
             }
             "Fluent" -> {
-                val fluentNodeName = alloyNode.replace("$", "") //nodeName
+                val curNumFluents = rawFile.split("\n")[0].replace("//", "").toInt()
+                val fluentNum = alloyNode.split("$")[1].toInt()
+                val newFluentNum = curNumFluents + fluentNum
+                val fluentNodeName = alloyNode.split("$")[0] + newFluentNum
 
-                // first, print the fluent
-                val fluentInitially = queryAlloyModel("${alloyNode}.initially", "")
-                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl", ",")
-                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl", ",")
-                println("$fluentNodeName:")
-                println("  Initially: $fluentInitially")
-                println("  Init: $fluentInitFl")
-                println("  Term: $fluentTermFl")
+                // first, construct the fluent
+                val numParams = queryAlloyModelDirectStr("#${alloyNode}.vars").toInt()
+                val paramTypes = (0 until numParams)
+                    .map { queryAlloyModel("P$it.($alloyNode.vars).envVarTypes", "") }
+                    .map { it.split("$")[0] }
 
+                val alloyFluentInitially = queryAlloyModel("${alloyNode}.initially", "")
+                val fluentInitially = if (alloyFluentInitially.contains("True")) "TRUE" else "FALSE"
+                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl.baseName")
+                    .map { it.replace(Regex("\\$.*$"), "") }
+                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl.baseName")
+                    .map { it.replace(Regex("\\$.*$"), "") }
+
+                val fluentSymActions = queryAlloyModel("${alloyNode}.initFl + ${alloyNode}.termFl")
+                val symActions = fluentSymActions
+                    .associate { symAct ->
+                        val baseName = queryAlloyModel("${symAct}.baseName", "")
+                            .replace(Regex("\\$.*$"), "")
+                        val paramMappingPairs = queryAlloyModel("${symAct}.actToFlParamsMap")
+                            .map { actIdx ->
+                                val flIdx = queryAlloyModel("$actIdx.($symAct.actToFlParamsMap)", "")
+                                val actIdxInt = actIdx
+                                    .replace(Regex("\\$.*$"), "")
+                                    .replace("P","")
+                                    .toInt()
+                                val flIdxInt = flIdx
+                                    .replace(Regex("\\$.*$"), "")
+                                    .replace("P","")
+                                    .toInt()
+                                Pair(actIdxInt,flIdxInt)
+                            }
+                        var paramMappings = mutableListOf<Int>()
+                        for (i in paramMappingPairs.indices) {
+                            val iMapping = paramMappingPairs.filter { it.second == i }
+                            if (iMapping.size != 1) {
+                                //println(paramMappingPairs)
+                                error("invalid iMapping size at index $i (should be 1): ${iMapping.size}")
+                            }
+                            val mapping = iMapping[0]
+                            paramMappings.add(mapping.first)
+                        }
+
+                        Pair(baseName, paramMappings)
+                    }
+                val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl, symActions)
+                formula.fluents[fluentNodeName] = fluent
+
+                // second, return the formula
                 val paramSeparator = if (tlaStyle) "][" else ","
-                val strNumParams = queryAlloyModelDirectStr("#$alloyNode.vars")
-                val numParams = strNumParams.toInt()
                 val params = (0 until numParams)
                     .map { queryAlloyModel("P$it.($alloyNode.vars)", "") }
                     .map { it.split("$")[0] }
@@ -107,9 +148,13 @@ class FormulaVisitor(
         }
     }
 
-    private fun queryAlloyModel(query : String, sep : String) : String {
+    private fun queryAlloyModel(query : String) : List<String> {
         val expr = CompUtil.parseOneExpression_fromString(world, query)
-        return (solution.eval(expr) as A4TupleSet).joinToString(sep) { it.atom(0) }
+        return (solution.eval(expr) as A4TupleSet).map { it.atom(0) }
+    }
+
+    private fun queryAlloyModel(query : String, sep : String) : String {
+        return queryAlloyModel(query).joinToString(sep)
     }
 
     private fun queryAlloyModelDirectStr(query : String) : String {
@@ -136,7 +181,7 @@ fun alloyColdStart() {
 }
 
 object AlsSynthesis {
-    fun synthFormulaFromAls(path : String, tlaStyle : Boolean) : String {
+    fun synthFormulaFromAls(path : String, tlaStyle : Boolean) : FormulaInfo {
         val als = File(path).readText()
 
         alloyColdStart()
@@ -147,7 +192,7 @@ object AlsSynthesis {
         val solution = TranslateAlloyToKodkod.execute_command(reporter, world.allReachableSigs, command, options)
 
         if (!solution.satisfiable()) {
-            return "could not synthesize a formula! (UNSAT)"
+            return FormulaInfo("could not synthesize a formula! (UNSAT)")
         }
 
         for (a in solution.allAtoms) {
@@ -157,20 +202,10 @@ object AlsSynthesis {
             world.addGlobal(a.label, a)
         }
 
-        return FormulaVisitor(world, solution, tlaStyle).createString("Root")
+        val formulaInfo = FormulaInfo()
+        val formula = FormulaVisitor(als, world, solution, tlaStyle, formulaInfo).createString("Root")
+        formulaInfo.setFormula(formula)
+        return formulaInfo
     }
 }
-
-/*
-fun synthFormulaForWA(errLts : NFA<String, Integer>) : String {
-
-    return ""
-}
- */
-
-
-
-
-
-
 

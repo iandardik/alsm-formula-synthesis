@@ -25,6 +25,7 @@ class CLI : CliktCommand(
     //private val solver by option("--solver", "-s", help = "The AlloyMax solver to use. Default: SAT4JMax").default("SAT4JMax")
     private val filename by option("--filename", "-f", help = "The .als file.").required()
     private val tla by option("--tla", "-t", help = "Project as a TLA+ formula.").flag()
+    private val json by option("--json", "-j", help = "Encode output in JSON.").flag()
     //private val traces by option("--traces", "-t", help = "The folder containing the tasks to run. It will find all task files under the folder recursively.")
     //private val timeout by option("--timeout", "-T", help = "The timeout in seconds for solving each task.").int().default(0)
     //private val model by option("--model", "-m", help = "Print the model to use for learning.").flag(default = false)
@@ -32,8 +33,10 @@ class CLI : CliktCommand(
     //private val expected by option("--expected", "-e", help = "Enumerate until the expected formula found.").flag(default = false)
 
     override fun run() {
-        val formula = AlsSynthesis.synthFormulaFromAls(filename, tla)
-        println(formula)
+        val formulaInfo = AlsSynthesis.synthFormulaFromAls(filename, tla)
+        val output = if (json) formulaInfo.toJson() else formulaInfo.toString()
+        println(output)
+
         /*
         return
         val options = AlloyMaxBase.defaultAlloyOptions()
