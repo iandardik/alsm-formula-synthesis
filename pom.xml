@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cmu.s3d</groupId>
-    <artifactId>LTL-Learning</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>alsm-formula-synthesis</artifactId>
+    <version>1.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
