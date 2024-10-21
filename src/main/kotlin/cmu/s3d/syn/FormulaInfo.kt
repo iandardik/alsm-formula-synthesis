@@ -27,18 +27,18 @@ class FormulaInfo(
 class Fluent(
     val paramTypes : List<String>,
     val initially : String,
-    val init : List<String>,
-    val term : List<String>,
-    val symActions : Map<String, List<Int>>
+    val init : List<Pair<String,List<Int>>>,
+    val term : List<Pair<String,List<Int>>>
 ) {
 
     fun toJson() : String {
         val paramTypeStr = "[" + paramTypes.joinToString(",") { "\"$it\"" } + "]";
-        val initStr = "[${init.joinToString(",") { "\"$it\"" }}]"
-        val termStr = "[${term.joinToString(",") { "\"$it\"" }}]"
-        val symActParamMaps = symActions
-            .map { "\"${it.key}\":[${it.value.joinToString(",")}]" }
+        val initStr = init
+            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
             .joinToString(",")
-        return "{\"paramTypes\":$paramTypeStr,\"initially\":\"$initially\",\"init\":$initStr,\"term\":$termStr,\"symActParamMaps\":{$symActParamMaps}}"
+        val termStr = term
+            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
+            .joinToString(",")
+        return "{\"paramTypes\":$paramTypeStr,\"initially\":\"$initially\",\"init\":[$initStr],\"term\":[$termStr]}"
     }
 }

@@ -77,14 +77,8 @@ class FormulaVisitor(
 
                 val alloyFluentInitially = queryAlloyModel("${alloyNode}.initially", "")
                 val fluentInitially = if (alloyFluentInitially.contains("True")) "TRUE" else "FALSE"
-                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl.baseName")
-                    .map { it.replace(Regex("\\$.*$"), "") }
-                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl.baseName")
-                    .map { it.replace(Regex("\\$.*$"), "") }
 
-                val fluentSymActions = queryAlloyModel("${alloyNode}.initFl + ${alloyNode}.termFl")
-                val symActions = fluentSymActions
-                    .associate { symAct ->
+                val parseFluentAction = { symAct : String ->
                         val baseName = queryAlloyModel("${symAct}.baseName", "")
                             .replace(Regex("\\$.*$"), "")
                         val paramMappingPairs = queryAlloyModel("${symAct}.actToFlParamsMap")
@@ -113,7 +107,11 @@ class FormulaVisitor(
 
                         Pair(baseName, paramMappings)
                     }
-                val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl, symActions)
+                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl")
+                    .map(parseFluentAction)
+                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl")
+                    .map(parseFluentAction)
+                val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl)
                 formula.fluents[fluentNodeName] = fluent
 
                 // second, return the formula
