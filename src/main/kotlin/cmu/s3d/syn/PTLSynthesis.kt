@@ -38,8 +38,8 @@ class FormulaVisitor(
             "Or" -> "(${children.joinToString(") \\/ (")})"
             //"EqualsVar" -> "(${children.joinToString(" = ")})"
             "VarEquals" -> {
-                val lhs = createString(queryAlloyModel("${alloyNode}.lhs", ""))
-                val rhs = createString(queryAlloyModel("${alloyNode}.rhs", ""))
+                val lhs = queryAlloyModel("${alloyNode}.lhs", "").split("$")[0]
+                val rhs = queryAlloyModel("${alloyNode}.rhs", "").split("$")[0]
                 "$lhs = $rhs"
             }
             "OnceAct" -> {
