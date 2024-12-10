@@ -8,6 +8,7 @@ import edu.mit.csail.sdg.translator.A4Solution
 import edu.mit.csail.sdg.translator.A4TupleSet
 import edu.mit.csail.sdg.translator.TranslateAlloyToKodkod
 import java.io.File
+import java.lang.Exception
 
 class FormulaVisitor(
     private val rawFile : String,
@@ -121,10 +122,16 @@ class FormulaVisitor(
                     .map(parseFluentAction)
                 val fluentTermFl = queryAlloyModel("${alloyNode}.termFl")
                     .map(parseFluentAction)
-                val fluentMutInitFl = queryAlloyModel("${alloyNode}.mutInitFl")
-                    .map(parseFluentAction)
-                val fluentMutTermFl = queryAlloyModel("${alloyNode}.mutTermFl")
-                    .map(parseFluentAction)
+                val fluentMutInitFl = try {
+                        queryAlloyModel("${alloyNode}.mutInitFl").map(parseFluentAction)
+                    } catch (e : Exception) {
+                        emptyList<Pair<String, List<Int>>>()
+                    }
+                val fluentMutTermFl = try {
+                        queryAlloyModel("${alloyNode}.mutTermFl").map(parseFluentAction)
+                    } catch (e : Exception) {
+                        emptyList<Pair<String, List<Int>>>()
+                    }
                 val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl, fluentMutInitFl, fluentMutTermFl)
                 formula.fluents[fluentNodeName] = fluent
 
