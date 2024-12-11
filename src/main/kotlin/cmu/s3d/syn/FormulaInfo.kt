@@ -30,7 +30,7 @@ class Fluent(
     val init : List<Pair<String,List<Int>>>,
     val term : List<Pair<String,List<Int>>>,
     val mutInit : List<Pair<String,List<Int>>>,
-    val mutTerm : List<Pair<String,List<Int>>>
+    val falsify : List<Pair<String,List<Int>>>
 ) {
 
     fun toJson() : String {
@@ -44,10 +44,10 @@ class Fluent(
         val mutInitStr = mutInit
             .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
             .joinToString(",")
-        val mutTermStr = mutTerm
+        val falsifyStr = falsify
             .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
             .joinToString(",")
         return "{\"paramTypes\":$paramTypeStr,\"initially\":\"$initially\"," +
-                "\"init\":[$initStr],\"term\":[$termStr],\"mutInit\":[$mutInitStr],\"mutTerm\":[$mutTermStr]}"
+                "\"init\":[$initStr],\"term\":[$termStr],\"mutInit\":[$mutInitStr],\"falsify\":[$falsifyStr]}"
     }
 }
