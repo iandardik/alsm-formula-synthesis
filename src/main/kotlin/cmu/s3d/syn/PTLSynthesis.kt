@@ -122,15 +122,21 @@ class FormulaVisitor(
                     .map(parseFluentAction)
                 val fluentTermFl = queryAlloyModel("${alloyNode}.termFl")
                     .map(parseFluentAction)
-                val fluentMutInitFl = queryAlloyModel("${alloyNode}.mutInitFl")
-                    .map(parseFluentAction)
+                val fluentMutInitFl = try {
+                        queryAlloyModel("${alloyNode}.mutInitFl").map(parseFluentAction)
+                    } catch (e : Exception) {
+                        emptyList<Pair<String, List<Int>>>()
+                    }
+                val fluentFalsifyFl = try {
+                    queryAlloyModel("${alloyNode}.falsifyFl").map(parseFluentAction)
+                } catch (e : Exception) {
+                    emptyList<Pair<String, List<Int>>>()
+                }
                 /*val fluentMutTermFl = try {
                         queryAlloyModel("${alloyNode}.mutTermFl").map(parseFluentAction)
                     } catch (e : Exception) {
                         emptyList<Pair<String, List<Int>>>()
                     }*/
-                val fluentFalsifyFl = queryAlloyModel("${alloyNode}.falsifyFl")
-                    .map(parseFluentAction)
                 val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl, fluentMutInitFl, fluentFalsifyFl)
                 formula.fluents[fluentNodeName] = fluent
 
