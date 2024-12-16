@@ -48,6 +48,11 @@ class FormulaVisitor(
                 val rhs = queryAlloyModel("${alloyNode}.rhs", "").split("$")[0]
                 "$lhs # $rhs"
             }
+            "VarSetMutex" -> {
+                val lhs = queryAlloyModel("${alloyNode}.lhs", "").split("$")[0]
+                val rhs = queryAlloyModel("${alloyNode}.rhs", "").split("$")[0]
+                "$lhs \\cap $rhs = {}"
+            }
             "OnceAct" -> {
                 val rawAct = queryAlloyModel("${alloyNode}.act", "")
                 val act = rawAct.split("$")[0]
