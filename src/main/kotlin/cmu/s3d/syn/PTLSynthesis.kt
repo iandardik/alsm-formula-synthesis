@@ -53,6 +53,11 @@ class FormulaVisitor(
                 val rhs = queryAlloyModel("${alloyNode}.rhs", "").split("$")[0]
                 "$lhs \\cap $rhs = {}"
             }
+            "VarLTE" -> {
+                val lhs = queryAlloyModel("${alloyNode}.lhs", "").split("$")[0]
+                val rhs = queryAlloyModel("${alloyNode}.rhs", "").split("$")[0]
+                "$lhs <= $rhs"
+            }
             "OnceAct" -> {
                 val rawAct = queryAlloyModel("${alloyNode}.act", "")
                 val act = rawAct.split("$")[0]
@@ -173,6 +178,7 @@ class FormulaVisitor(
             }
             "TT" -> "TRUE"
             "FF" -> "FALSE"
+            "DummyChild" -> "DummyChild"
             else -> error("Invalid node type: $nodeType")
         }
     }
