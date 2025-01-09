@@ -86,9 +86,10 @@ class FormulaVisitor(
             }
             "Fluent" -> {
                 val curNumFluents = rawFile.split("\n")[0].replace("//", "").toInt()
+                val workerId = rawFile.split("\n")[1].replace("//", "").toInt()
                 val fluentNum = alloyNode.split("$")[1].toInt()
                 val newFluentNum = curNumFluents + fluentNum
-                val fluentNodeName = alloyNode.split("$")[0] + newFluentNum
+                val fluentNodeName = alloyNode.split("$")[0] + newFluentNum + "_" + workerId
 
                 // first, construct the fluent
                 val numParams = queryAlloyModelDirectStr("#${alloyNode}.vars").toInt()
