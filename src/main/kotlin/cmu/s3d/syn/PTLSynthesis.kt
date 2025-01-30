@@ -100,7 +100,8 @@ class FormulaVisitor(
                 val alloyFluentInitially = queryAlloyModel("${alloyNode}.initially", "")
                 val fluentInitially = if (alloyFluentInitially.contains("True")) "TRUE" else "FALSE"
 
-                val parseFluentAction = { symAct : String ->
+                val flActions = queryAlloyModel("${alloyNode}.flActions")
+                    .map { symAct ->
                         val baseName = queryAlloyModel("${symAct}.baseName", "")
                             .replace(Regex("\\$.*$"), "")
                         val paramMappingPairs = queryAlloyModel("${symAct}.actToFlParamsMap")
@@ -126,29 +127,14 @@ class FormulaVisitor(
                             val mapping = iMapping[0]
                             paramMappings.add(mapping.first)
                         }
+                        val alloyValue = queryAlloyModel("${symAct}.value", "")
+                        val value = if (alloyValue.contains("True")) "TRUE" else "FALSE"
+                        val alloyMutexFl = queryAlloyModel("${symAct}.mutexFl", "")
+                        val mutexFl = if (alloyMutexFl.contains("True")) "TRUE" else "FALSE"
+                        FlAction(baseName, paramMappings, value, mutexFl)
+                    }
 
-                        Pair(baseName, paramMappings)
-                    }
-                val fluentInitFl = queryAlloyModel("${alloyNode}.initFl")
-                    .map(parseFluentAction)
-                val fluentTermFl = queryAlloyModel("${alloyNode}.termFl")
-                    .map(parseFluentAction)
-                val fluentMutInitFl = try {
-                        queryAlloyModel("${alloyNode}.mutInitFl").map(parseFluentAction)
-                    } catch (e : Exception) {
-                        emptyList<Pair<String, List<Int>>>()
-                    }
-                val fluentFalsifyFl = try {
-                    queryAlloyModel("${alloyNode}.falsifyFl").map(parseFluentAction)
-                } catch (e : Exception) {
-                    emptyList<Pair<String, List<Int>>>()
-                }
-                /*val fluentMutTermFl = try {
-                        queryAlloyModel("${alloyNode}.mutTermFl").map(parseFluentAction)
-                    } catch (e : Exception) {
-                        emptyList<Pair<String, List<Int>>>()
-                    }*/
-                val fluent = Fluent(paramTypes, fluentInitially, fluentInitFl, fluentTermFl, fluentMutInitFl, fluentFalsifyFl)
+                val fluent = Fluent(paramTypes, fluentInitially, flActions)
                 formula.fluents[fluentNodeName] = fluent
 
                 // second, return the formula

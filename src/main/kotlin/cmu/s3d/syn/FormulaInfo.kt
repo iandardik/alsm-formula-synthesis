@@ -24,30 +24,26 @@ class FormulaInfo(
     }
 }
 
+class FlAction(
+    val baseName : String,
+    val paramMap : List<Int>,
+    val value : String,
+    val mutexFl : String
+) {
+    fun toJson() : String {
+        return "{\"baseName\":\"${baseName}\",\"paramMap\":${paramMap},\"value\":\"$value\",\"mutexFl\":\"$mutexFl\"}"
+    }
+}
+
 class Fluent(
     val paramTypes : List<String>,
     val initially : String,
-    val init : List<Pair<String,List<Int>>>,
-    val term : List<Pair<String,List<Int>>>,
-    val mutInit : List<Pair<String,List<Int>>>,
-    val falsify : List<Pair<String,List<Int>>>
+    val flActions : List<FlAction>
 ) {
 
     fun toJson() : String {
         val paramTypeStr = "[" + paramTypes.joinToString(",") { "\"$it\"" } + "]";
-        val initStr = init
-            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
-            .joinToString(",")
-        val termStr = term
-            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
-            .joinToString(",")
-        val mutInitStr = mutInit
-            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
-            .joinToString(",")
-        val falsifyStr = falsify
-            .map { "{\"${it.first}\":[${it.second.joinToString(",")}]}" }
-            .joinToString(",")
-        return "{\"paramTypes\":$paramTypeStr,\"initially\":\"$initially\"," +
-                "\"init\":[$initStr],\"term\":[$termStr],\"mutInit\":[$mutInitStr],\"falsify\":[$falsifyStr]}"
+        val actFlStr = "[" + flActions.joinToString(",") { it.toJson() } + "]";
+        return "{\"paramTypes\":$paramTypeStr,\"initially\":\"$initially\",\"actionFls\":$actFlStr}"
     }
 }
