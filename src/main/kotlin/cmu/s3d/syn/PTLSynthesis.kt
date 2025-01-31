@@ -104,9 +104,9 @@ class FormulaVisitor(
                     .map { symAct ->
                         val baseName = queryAlloyModel("${symAct}.baseName", "")
                             .replace(Regex("\\$.*$"), "")
-                        val paramMappingPairs = queryAlloyModel("${symAct}.actToFlParamsMap")
+                        val paramMappingPairs = queryAlloyModel("${symAct}.flToActParamsMap")
                             .map { actIdx ->
-                                val flIdx = queryAlloyModel("$actIdx.($symAct.actToFlParamsMap)", "")
+                                val flIdx = queryAlloyModel("$actIdx.($symAct.flToActParamsMap)", "")
                                 val actIdxInt = actIdx
                                     .replace(Regex("\\$.*$"), "")
                                     .replace("P","")
@@ -119,13 +119,13 @@ class FormulaVisitor(
                             }
                         var paramMappings = mutableListOf<Int>()
                         for (i in paramMappingPairs.indices) {
-                            val iMapping = paramMappingPairs.filter { it.second == i }
+                            val iMapping = paramMappingPairs.filter { it.first == i }
                             if (iMapping.size != 1) {
                                 //println(paramMappingPairs)
                                 error("invalid iMapping size at index $i (should be 1): ${iMapping.size}")
                             }
                             val mapping = iMapping[0]
-                            paramMappings.add(mapping.first)
+                            paramMappings.add(mapping.second)
                         }
                         val alloyValue = queryAlloyModel("${symAct}.value", "")
                         val value = if (alloyValue.contains("True")) "TRUE" else "FALSE"
