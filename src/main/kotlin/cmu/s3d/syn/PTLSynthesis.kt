@@ -185,6 +185,13 @@ class FormulaVisitor(
     }
 }
 
+fun createFormulaInfo(als : String, world : CompModule, solution : A4Solution, tlaStyle: Boolean) : FormulaInfo {
+    val formulaInfo = FormulaInfo()
+    val formula = FormulaVisitor(als, world, solution, tlaStyle, formulaInfo).createString("Root")
+    formulaInfo.setFormula(formula)
+    return formulaInfo
+}
+
 fun alloyOptions(custSolver : A4Options.SatSolver = A4Options.SatSolver.SAT4JMax): A4Options {
     return A4Options().apply {
         solver = custSolver
@@ -224,10 +231,7 @@ object AlsSynthesis {
             world.addGlobal(a.label, a)
         }
 
-        val formulaInfo = FormulaInfo()
-        val formula = FormulaVisitor(als, world, solution, tlaStyle, formulaInfo).createString("Root")
-        formulaInfo.setFormula(formula)
-        return formulaInfo
+        return createFormulaInfo(als, world, solution, tlaStyle)
     }
 }
 
