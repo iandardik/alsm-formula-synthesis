@@ -26,12 +26,12 @@ class FormulaInfo(
 
 class FlAction(
     val baseName : String,
+    val priority : Int,
     val paramMap : List<Int>,
-    val value : String,
-    val mutexFl : String
+    val value : String
 ) {
     fun toJson() : String {
-        return "{\"baseName\":\"${baseName}\",\"paramMap\":${paramMap},\"value\":\"$value\",\"mutexFl\":\"$mutexFl\"}"
+        return "{\"baseName\":\"${baseName}\",\"priority\":${priority},\"paramMap\":${paramMap},\"value\":\"$value\"}"
     }
 }
 

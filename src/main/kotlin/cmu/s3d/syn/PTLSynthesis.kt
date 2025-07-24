@@ -104,6 +104,10 @@ class FormulaVisitor(
                     .map { symAct ->
                         val baseName = queryAlloyModel("${symAct}.baseName", "")
                             .replace(Regex("\\$.*$"), "")
+                        val priority = queryAlloyModel("${symAct}.flActIdx", "")
+                            .replace(Regex("\\$.*$"), "")
+                            .replace("S", "")
+                            .toInt()
                         val paramMappingPairs = queryAlloyModel("${symAct}.flToActParamsMap")
                             .map { actIdx ->
                                 val flIdx = queryAlloyModel("$actIdx.($symAct.flToActParamsMap)", "")
@@ -129,9 +133,7 @@ class FormulaVisitor(
                         }
                         val alloyValue = queryAlloyModel("${symAct}.value", "")
                         val value = if (alloyValue.contains("True")) "TRUE" else "FALSE"
-                        val alloyMutexFl = queryAlloyModel("${symAct}.mutexFl", "")
-                        val mutexFl = if (alloyMutexFl.contains("True")) "TRUE" else "FALSE"
-                        FlAction(baseName, paramMappings, value, mutexFl)
+                        FlAction(baseName, priority, paramMappings, value)
                     }
 
                 val fluent = Fluent(paramTypes, fluentInitially, flActions)
